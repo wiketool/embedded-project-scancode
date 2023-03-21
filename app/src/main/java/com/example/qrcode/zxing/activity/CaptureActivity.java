@@ -19,6 +19,7 @@ import android.widget.Button;
 import android.widget.Toast;
 
 import com.example.qrcode.R;
+import com.example.qrcode.ToastUtils;
 import com.example.qrcode.zxing.camera.CameraManager;
 import com.example.qrcode.zxing.decoding.CaptureActivityHandler;
 import com.example.qrcode.zxing.decoding.InactivityTimer;
@@ -51,7 +52,7 @@ public class CaptureActivity extends Activity implements Callback {
     private boolean vibrate;
     private Button cancelScanButton;
     private Button completeScanButton;
-    private Set<Integer> scanResults;
+    private Set<String> scanResults;
 
     /**
      * Called when the activity is first created.
@@ -108,8 +109,8 @@ public class CaptureActivity extends Activity implements Callback {
         completeScanButton.setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
-                System.out.println(scanResults);
-                CaptureActivity.this.finish();
+//                System.out.println(scanResults);
+                handleComplete();
             }
         });
     }
@@ -136,22 +137,32 @@ public class CaptureActivity extends Activity implements Callback {
      * @param result
      * @param barcode
      */
+    public void handleComplete() {
+        inactivityTimer.onActivity();
+
+//			System.out.println("Result:"+resultString);
+        Intent resultIntent = new Intent();
+        Bundle bundle = new Bundle();
+        bundle.putString("result", scanResults.toString());
+        resultIntent.putExtras(bundle);
+        this.setResult(RESULT_OK, resultIntent);
+        CaptureActivity.this.finish();
+    }
+
     public void handleDecode(Result result, Bitmap barcode) {
         inactivityTimer.onActivity();
-        playBeepSoundAndVibrate();
         String resultString = result.getText();
-        //FIXME
         if (resultString.equals("")) {
             Toast.makeText(CaptureActivity.this, "Scan failed!", Toast.LENGTH_SHORT).show();
         } else {
 //			System.out.println("Result:"+resultString);
-            Intent resultIntent = new Intent();
-            Bundle bundle = new Bundle();
-            bundle.putString("result", resultString);
-            resultIntent.putExtras(bundle);
-            this.setResult(RESULT_OK, resultIntent);
+            if (!scanResults.contains(resultString)) {
+                ToastUtils.showToast(this, resultString);
+                playBeepSoundAndVibrate();
+                scanResults.add(resultString);
+            }
         }
-        CaptureActivity.this.finish();
+        handler.restartPreviewAndDecode();
     }
 
     private void initCamera(SurfaceHolder surfaceHolder) {
