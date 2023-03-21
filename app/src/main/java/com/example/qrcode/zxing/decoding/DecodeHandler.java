@@ -31,6 +31,7 @@ import com.google.zxing.DecodeHintType;
 import com.google.zxing.MultiFormatReader;
 import com.google.zxing.ReaderException;
 import com.google.zxing.Result;
+import com.google.zxing.common.GlobalHistogramBinarizer;
 import com.google.zxing.common.HybridBinarizer;
 
 
@@ -85,7 +86,7 @@ final class DecodeHandler extends Handler {
     height = tmp;
     
     PlanarYUVLuminanceSource source = CameraManager.get().buildLuminanceSource(rotatedData, width, height);
-    BinaryBitmap bitmap = new BinaryBitmap(new HybridBinarizer(source));
+    BinaryBitmap bitmap = new BinaryBitmap(new GlobalHistogramBinarizer(source));
     try {
       rawResult = multiFormatReader.decodeWithState(bitmap);
     } catch (ReaderException re) {
